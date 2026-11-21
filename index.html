@@ -378,7 +378,7 @@ const S = {
   activeClipUid: '',
   activeProfileKey: '',
   profilePlaylist: '',
-  feedPlaylist: null, // { accountKey, name } khi đang phát theo playlist
+  feedPlaylist: null,
   tab: 'foryou',
   tagFilter: '',
   searchQuery: '',
@@ -488,7 +488,6 @@ function parseRows(rows) {
       if (!acc.tags.some(x => x.toLowerCase() === tg.toLowerCase())) acc.tags.push(tg);
     });
 
-    // Cột D (index 3): Tên Danh sách phát (Playlist)
     const playlistName = g(3);
     if (playlistName && !acc.playlists.some(p => p.name.toLowerCase() === playlistName.toLowerCase())) {
       acc.playlists.push({ name: playlistName, count: 0 });
@@ -1118,6 +1117,13 @@ $('#btnProfileFollow').onclick = () => {
 $('#btnClearUi').onclick = () => {
   S.cleanUi = !S.cleanUi;
   document.body.classList.toggle('clean-mode', S.cleanUi);
+  const btn = $('#btnClearUi');
+  btn.classList.toggle('violet-grad', S.cleanUi);
+  btn.classList.toggle('glass', !S.cleanUi);
+  btn.classList.toggle('text-white', S.cleanUi);
+  btn.classList.toggle('text-purple-200', !S.cleanUi);
+  btn.innerHTML = `<i data-lucide="${S.cleanUi ? 'eye-off' : 'eye'}" class="h-4 w-4"></i>`;
+  icons();
   toast(S.cleanUi ? 'Đã ẩn chữ trên video' : 'Đã hiện chữ trên video');
 };
 
