@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<title>Private Clips</title>
+<meta name="theme-color" content="#080910">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Clips">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237C3AED'/%3E%3Cstop offset='1' stop-color='%23A855F7'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='112' fill='%23080910'/%3E%3Crect x='24' y='24' width='464' height='464' rx='96' fill='url(%23g)' opacity='.25'/%3E%3Cpath d='M200 150v212l178-106z' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23080910'/%3E%3Cpath d='M200 150v212l178-106z' fill='%23A855F7'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: { sans: ['"Plus Jakarta Sans"', '"Be Vietnam Pro"', 'system-ui', 'sans-serif'] },
+      colors: {
+        ink: '#080910',
+        panel: '#131524',
+        violetMain: '#7C3AED',
+        violetLight: '#A855F7',
+        cyanAccent: '#22D3EE'
+      }
+    }
+  }
+};
+</script>
+<style>
+  :root {
+    --fluid-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  html, body {
+    background: #080910;
+    color: #fff;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .glass {
+    background: linear-gradient(145deg, rgba(28, 32, 54, 0.72), rgba(15, 17, 30, 0.56));
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    backdrop-filter: blur(20px) saturate(160%);
+    border: 1px solid rgba(168, 85, 247, 0.25);
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.14), 0 10px 28px -8px rgba(0, 0, 0, 0.6);
+    transition: transform 0.35s var(--fluid-ease), background 0.3s ease, border-color 0.3s ease;
+  }
+  .glass:active { transform: scale(0.95); }
+
+  .violet-grad {
+    background: linear-gradient(135deg, #7C3AED 0%, #A855F7 100%);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    box-shadow: 0 0 28px rgba(124, 58, 237, 0.6);
+    transition: transform 0.35s var(--fluid-ease), filter 0.3s ease;
+  }
+  .violet-grad:active { transform: scale(0.95); }
+
+  .tab-active {
+    color: #fff !important;
+  }
+  .tab-active .tab-icon-wrap {
+    background: linear-gradient(135deg, #7C3AED 0%, #A855F7 100%);
+    box-shadow: 0 0 18px rgba(168, 85, 247, 0.7);
+    border-color: rgba(34, 211, 238, 0.7);
+  }
+
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { scrollbar-width: none; }
+
+  #feedScroll {
+    height: 100dvh;
+    width: 100%;
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .feed-slide {
+    position: relative;
+    height: 100dvh;
+    width: 100%;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #080910;
+    overflow: hidden;
+  }
+
+  .video-stage {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    max-width: 540px;
+    max-height: 100dvh;
+    aspect-ratio: 9 / 16;
+    background: #000;
+    overflow: hidden;
+  }
+
+  @media (max-width: 540px) {
+    .video-stage {
+      max-width: 100%;
+      width: 100vw;
+      height: 100dvh;
+      aspect-ratio: auto;
+    }
+  }
+
+  .feed-poster-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: blur(28px) brightness(0.45) saturate(1.2);
+    transform: scale(1.1);
+    pointer-events: none;
+  }
+
+  .feed-poster-cover {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
+  }
+
+  .feed-player-host {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+  }
+
+  .feed-player-host iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+  }
+
+  .feed-grad-bottom {
+    position: absolute;
+    inset-x: 0;
+    bottom: 0;
+    height: 44%;
+    z-index: 5;
+    pointer-events: none;
+    background: linear-gradient(to top, rgba(8, 9, 16, 0.94) 0%, rgba(8, 9, 16, 0.6) 55%, transparent 100%);
+  }
+
+  .feed-grad-top {
+    position: absolute;
+    inset-x: 0;
+    top: 0;
+    height: 18%;
+    z-index: 5;
+    pointer-events: none;
+    background: linear-gradient(to bottom, rgba(8, 9, 16, 0.72) 0%, transparent 100%);
+  }
+
+  body.clean-mode .feed-overlay-ui {
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+  .feed-overlay-ui {
+    transition: opacity 0.28s ease;
+  }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body class="text-white antialiased select-none">
+
+<div id="app" class="relative h-dvh w-full overflow-hidden bg-ink">
+
+  <!-- TOP HEADER OVERLAY -->
+  <header id="topBar" class="fixed inset-x-0 top-0 z-30 flex items-center justify-between px-4 pb-2 pt-[max(0.75rem,env(safe-area-inset-top))] pointer-events-none">
+    <div id="topModeBadge" class="glass pointer-events-auto flex max-w-[70vw] items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-bold text-white/90">
+      <span class="h-2 w-2 shrink-0 rounded-full bg-cyanAccent"></span>
+      <span id="topModeText" class="truncate">Dành cho bạn</span>
+      <button id="btnClearFeedFilter" type="button" class="hidden ml-1 rounded-full bg-white/15 px-1.5 py-0.5 text-[10px] font-bold text-cyanAccent hover:bg-white/25" title="Thoát danh sách phát / bộ lọc">✕</button>
+    </div>
+
+    <div class="pointer-events-auto flex items-center gap-2">
+      <button id="btnClearUi" type="button" class="glass flex h-9 w-9 items-center justify-center rounded-full text-purple-200" title="Ẩn/hiện chữ" aria-label="Ẩn/hiện chữ">
+        <i data-lucide="eye" class="h-4 w-4"></i>
+      </button>
+      <button id="btnOpenCfg" type="button" class="glass flex h-9 w-9 items-center justify-center rounded-full text-cyanAccent" title="Cấu hình nguồn" aria-label="Cấu hình nguồn">
+        <i data-lucide="settings-2" class="h-4 w-4"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- VIEW 1: TIKTOK VERTICAL FEED -->
+  <main id="viewFeed" class="relative h-dvh w-full">
+    <div id="feedScroll" class="no-scrollbar"></div>
+  </main>
+
+  <!-- VIEW 2: ACCOUNT PROFILE PAGE -->
+  <section id="viewProfile" class="hidden h-dvh w-full overflow-y-auto bg-ink pb-24 pt-[max(4.25rem,calc(env(safe-area-inset-top)+3.5rem))]">
+    <div class="mx-auto max-w-3xl px-4">
+      <div class="mb-4 flex items-center justify-between">
+        <button id="btnBackFromProfile" type="button" class="glass flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold text-white">
+          <i data-lucide="arrow-left" class="h-4 w-4 text-cyanAccent"></i>
+          <span>Quay lại Feed</span>
+        </button>
+        <button id="btnProfileFollow" type="button" class="violet-grad flex items-center gap-1.5 rounded-full px-5 py-2 text-xs font-bold">
+          <i data-lucide="heart" class="h-3.5 w-3.5"></i>
+          <span id="profileFollowText">Follow</span>
+        </button>
+      </div>
+
+      <div class="glass rounded-3xl p-5">
+        <div class="flex items-center gap-4">
+          <div id="profileAvatar" class="h-16 w-16 shrink-0 overflow-hidden rounded-full bg-panel ring-2 ring-cyanAccent/70"></div>
+          <div class="min-w-0 flex-1">
+            <h1 id="profileHandle" class="truncate text-lg font-extrabold text-white"></h1>
+            <p id="profileStats" class="mt-0.5 text-xs font-medium text-white/60"></p>
+          </div>
+        </div>
+        <div id="profileTags" class="mt-3.5 flex flex-wrap gap-1.5"></div>
+        <p id="profileDesc" class="mt-3 text-xs leading-relaxed text-white/70"></p>
+      </div>
+
+      <!-- DANH SÁCH PHÁT CỦA ACCOUNT (TIKTOK PLAYLISTS) -->
+      <div id="profilePlaylistsWrap" class="mt-5 hidden">
+        <div class="mb-2 flex items-center justify-between">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-purple-200/75">Danh sách phát</span>
+          <button id="btnPlayAllPlaylist" type="button" class="hidden items-center gap-1 rounded-full bg-cyanAccent/20 px-3 py-1 text-[11px] font-bold text-cyanAccent ring-1 ring-cyanAccent/40">
+            <i data-lucide="play" class="h-3 w-3 fill-cyanAccent"></i>
+            <span>Phát danh sách này</span>
+          </button>
+        </div>
+        <div id="profilePlaylists" class="no-scrollbar flex gap-2 overflow-x-auto pb-1"></div>
+      </div>
+
+      <div class="mt-5 mb-3 flex items-center justify-between">
+        <h2 id="profileGridTitle" class="flex items-center gap-2 text-sm font-bold text-white/90">
+          <span class="h-3.5 w-1 rounded-full bg-cyanAccent"></span>
+          <span>Tất cả video</span>
+        </h2>
+        <span id="profileClipCount" class="text-xs font-semibold text-cyanAccent"></span>
+      </div>
+      <div id="profileGrid" class="grid grid-cols-3 gap-2.5 sm:grid-cols-4"></div>
+    </div>
+  </section>
+
+  <!-- VIEW 3: DISCOVER (SEARCH ACCOUNT & HASHTAGS) -->
+  <section id="viewDiscover" class="hidden h-dvh w-full overflow-y-auto bg-ink pb-24 pt-[max(4.25rem,calc(env(safe-area-inset-top)+3.5rem))]">
+    <div class="mx-auto max-w-3xl px-4">
+      <div class="glass flex items-center gap-2.5 rounded-2xl px-3.5 py-2.5">
+        <i data-lucide="search" class="h-4 w-4 shrink-0 text-cyanAccent"></i>
+        <input id="discoverInput" type="search" placeholder="Tìm @account, danh sách phát hoặc #hashtag..." class="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/40" autocomplete="off">
+        <button id="discoverClear" type="button" class="hidden text-xs font-semibold text-white/50 hover:text-white">Xóa</button>
+      </div>
+
+      <div class="mt-4">
+        <p class="mb-2 text-[11px] font-bold uppercase tracking-wider text-purple-200/70">Hashtag nổi bật</p>
+        <div id="discoverTags" class="no-scrollbar flex gap-2 overflow-x-auto pb-1"></div>
+      </div>
+
+      <div class="mt-6">
+        <div class="mb-3 flex items-center justify-between">
+          <h2 id="discoverHeading" class="text-sm font-bold text-white/90">Tất cả Account</h2>
+          <span id="discoverCount" class="text-xs font-semibold text-cyanAccent"></span>
+        </div>
+        <div id="discoverAccounts" class="grid grid-cols-2 gap-3 sm:grid-cols-3"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BOTTOM TAB BAR -->
+  <nav id="bottomNav" aria-label="Điều hướng chính" class="fixed inset-x-0 bottom-0 z-30 border-t border-purple-400/20 bg-ink/85 pb-[max(0.4rem,env(safe-area-inset-bottom))] pt-1.5 backdrop-blur-xl">
+    <div class="mx-auto flex max-w-md items-center justify-around px-2">
+      <button type="button" data-tab="foryou" class="nav-tab tab-active flex flex-1 flex-col items-center gap-1 py-1 text-[11px] font-bold text-white/55">
+        <span class="tab-icon-wrap flex h-8 w-8 items-center justify-center rounded-xl border border-purple-400/20 bg-panel/70 transition">
+          <i data-lucide="flame" class="h-4 w-4"></i>
+        </span>
+        <span>Dành cho bạn</span>
+      </button>
+
+      <button type="button" data-tab="following" class="nav-tab flex flex-1 flex-col items-center gap-1 py-1 text-[11px] font-bold text-white/55">
+        <span class="tab-icon-wrap flex h-8 w-8 items-center justify-center rounded-xl border border-purple-400/20 bg-panel/70 transition">
+          <i data-lucide="heart" class="h-4 w-4"></i>
+        </span>
+        <span>Đang follow</span>
+      </button>
+
+      <button type="button" data-tab="discover" class="nav-tab flex flex-1 flex-col items-center gap-1 py-1 text-[11px] font-bold text-white/55">
+        <span class="tab-icon-wrap flex h-8 w-8 items-center justify-center rounded-xl border border-purple-400/20 bg-panel/70 transition">
+          <i data-lucide="compass" class="h-4 w-4"></i>
+        </span>
+        <span>Khám phá</span>
+      </button>
+    </div>
+  </nav>
+
+</div>
+
+<!-- CONFIG MODAL -->
+<div id="cfgModal" class="fixed inset-0 z-[80] hidden items-center justify-center bg-black/75 p-4 backdrop-blur-md">
+  <div class="glass max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl p-6 shadow-2xl">
+    <div class="mb-4 flex items-center justify-between">
+      <h2 class="text-lg font-bold">Cấu hình nguồn video</h2>
+      <button id="cfgClose" type="button" class="glass flex h-9 w-9 items-center justify-center rounded-full" aria-label="Đóng"><i data-lucide="x" class="h-5 w-5"></i></button>
+    </div>
+    <label class="text-sm font-semibold text-purple-200/80">Link hoặc ID Google Sheet</label>
+    <input id="cfgSheet" class="mt-2 w-full rounded-xl border border-purple-400/25 bg-panel/70 px-4 py-3 text-sm text-white outline-none focus:border-cyanAccent" placeholder="https://docs.google.com/spreadsheets/d/…">
+    <p class="mt-2 text-xs text-white/50">Cột A: Account • Cột B: Tag • Cột D: Danh sách phát • Cột G: Link Drive • Cột H: Tên clip</p>
+    <div class="mt-6 flex flex-wrap gap-2">
+      <button id="cfgSave" type="button" class="violet-grad h-11 flex-1 rounded-full px-5 text-sm font-bold">Lưu &amp; tải lại</button>
+      <button id="cfgMock" type="button" class="glass h-11 rounded-full px-5 text-sm font-semibold">Dữ liệu mẫu</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="pointer-events-none fixed bottom-20 left-1/2 z-[120] -translate-x-1/2 translate-y-6 rounded-full border border-cyanAccent/40 bg-panel/95 px-5 py-2.5 text-xs font-semibold text-white opacity-0 shadow-xl backdrop-blur-xl transition-all duration-300"></div>
+
+<script>
+(() => {
+'use strict';
+
+const DEFAULT_SHEET_ID = '1p3Bs-_oOuQIQQm__4R1flli1BuFGW_JbJ-P8-z8vRR4';
+const LEGACY_BROKEN_ID = '1IKTN4-IQVx8Pg239GnR6b4oF4D2LPXXg';
+
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+function readWinStore() {
+  try {
+    if (window.name && window.name.startsWith('PC_TIKTOK:')) {
+      return JSON.parse(window.name.slice(10)) || {};
+    }
+  } catch (e) {}
+  return {};
+}
+function writeWinStore(obj) {
+  try { window.name = 'PC_TIKTOK:' + JSON.stringify(obj); } catch (e) {}
+}
+const lsRaw = (k) => {
+  try { const v = localStorage.getItem(k); if (v !== null) return v; } catch (e) {}
+  const ws = readWinStore();
+  return ws[k] !== undefined ? ws[k] : null;
+};
+const lsSetRaw = (k, v) => {
+  try { localStorage.setItem(k, v); } catch (e) {}
+  const ws = readWinStore(); ws[k] = v; writeWinStore(ws);
+};
+const load = (k, d) => { try { const v = JSON.parse(lsRaw(k)); return v ?? d; } catch (e) { return d; } };
+const save = (k, v) => lsSetRaw(k, JSON.stringify(v));
+const icons = () => { try { window.lucide && lucide.createIcons(); } catch (e) {} };
+
+const savedSheet = lsRaw('pc_sheet');
+const initialSheet = (!savedSheet || savedSheet === LEGACY_BROKEN_ID) ? DEFAULT_SHEET_ID : savedSheet;
+if (savedSheet === LEGACY_BROKEN_ID) lsSetRaw('pc_sheet', DEFAULT_SHEET_ID);
+
+const S = {
+  accounts: [],
+  clips: [],
+  feedClips: [],
+  activeClipUid: '',
+  activeProfileKey: '',
+  profilePlaylist: '',
+  feedPlaylist: null, // { accountKey, name } khi đang phát theo playlist
+  tab: 'foryou',
+  tagFilter: '',
+  searchQuery: '',
+  cleanUi: false,
+  following: load('pc_following', []),
+  likedClips: load('pc_liked_clips', []),
+  sheet: initialSheet
+};
+
+let tt;
+function toast(msg) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.style.opacity = 1;
+  t.style.transform = 'translate(-50%, 0)';
+  clearTimeout(tt);
+  tt = setTimeout(() => {
+    t.style.opacity = 0;
+    t.style.transform = 'translate(-50%, 24px)';
+  }, 2600);
+}
+
+function fid(u) {
+  if (!u) return '';
+  u = String(u).trim();
+  const m = u.match(/\/d\/([\w-]{10,})/) || u.match(/[?&]id=([\w-]{10,})/) || u.match(/\/folders\/([\w-]{10,})/);
+  if (m) return m[1];
+  return /^[\w-]{15,}$/.test(u) ? u : '';
+}
+const thumb = (id, w) => id ? `https://lh3.googleusercontent.com/d/${id}=w${w}` : '';
+const thumbAlt = (id, w) => id ? `https://drive.google.com/thumbnail?id=${id}&sz=w${w}` : '';
+function imgUrl(u, w) {
+  u = String(u || '').trim();
+  if (!u) return '';
+  if (/drive\.google\.com|docs\.google\.com/.test(u)) return thumb(fid(u), w);
+  return /^https?:\/\//.test(u) ? u : '';
+}
+
+function makeAvatarSvg(name) {
+  let hash = 0;
+  for (const ch of String(name || 'A')) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+  const hue = 250 + (hash % 60);
+  const letter = esc((String(name || 'A').replace(/^@+/, '').trim()[0] || 'A').toUpperCase());
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'><defs><linearGradient id='a' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='hsl(${hue},75%,45%)'/><stop offset='1' stop-color='#080910'/></linearGradient></defs><rect width='128' height='128' fill='url(#a)'/><text x='50%' y='54%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='54' fill='#fff'>${letter}</text></svg>`;
+  return 'data:image/svg+xml,' + encodeURIComponent(svg);
+}
+
+window.imgFail = (el) => {
+  const list = (el.dataset.fb || '').split('|').filter(Boolean);
+  if (list.length) {
+    el.dataset.fb = list.slice(1).join('|');
+    el.src = list[0];
+  } else if (el.dataset.gen) {
+    el.onerror = null;
+    el.src = el.dataset.gen;
+  }
+};
+
+function renderImgTag(src, fbs, genSrc, cls, alt) {
+  const first = src || fbs.find(Boolean) || genSrc;
+  const rest = (src ? fbs : fbs.slice(1)).filter(Boolean).join('|');
+  return `<img src="${esc(first)}" data-fb="${esc(rest)}" data-gen="${esc(genSrc)}" onerror="imgFail(this)" alt="${esc(alt)}" class="${cls}" decoding="async" referrerpolicy="no-referrer">`;
+}
+
+function slugTag(raw) {
+  return String(raw || '').trim().replace(/^#+/, '').replace(/\s+/g, '');
+}
+
+const MOCK = [
+  ['@kênh_sáng_tạo', 'trend, ngắn_gọn', '20/11/2026', 'Series Đi Đà Lạt', '', '', 'MOCK_clip_101', 'Tập 1: Đêm sương mù', 'Tổng hợp các phân cảnh ngắn dọc màn hình phong cách TikTok.'],
+  ['@kênh_sáng_tạo', '', '21/11/2026', 'Series Đi Đà Lạt', '', '', 'MOCK_clip_102', 'Tập 2: Đồi chè sáng sớm', ''],
+  ['@kênh_sáng_tạo', '', '21/11/2026', 'Góc Review', '', '', 'MOCK_clip_103', 'Mở hộp phụ kiện bàn làm việc', ''],
+  ['@nhịp_sống_đêm', 'đêm_khuya, chill', '19/11/2026', 'Sài Gòn 2AM', '', '', 'MOCK_clip_201', 'Video 01', 'Không gian ánh đèn neon và nhịp điệu chậm rãi.'],
+  ['@phiêu_lưu_ký', 'khám_phá, dọc_916', '18/11/2026', '', '', '', 'MOCK_clip_301', 'Clip lẻ 01', 'Hành trình qua những góc phố nhỏ.']
+];
+
+function parseRows(rows) {
+  const accMap = new Map();
+  const headRe = /^(tên phim|ten phim|name|title|phim|account|kênh|kenh)$/i;
+  let seq = 0;
+
+  rows.forEach(r => {
+    const g = (i) => (r[i] === null || r[i] === undefined) ? '' : String(r[i]).trim();
+    const rawName = g(0);
+    if (!rawName || headRe.test(rawName)) return;
+    const handle = rawName.startsWith('@') ? rawName : '@' + rawName;
+    const key = handle.toLowerCase();
+
+    let acc = accMap.get(key);
+    if (!acc) {
+      acc = {
+        key,
+        handle,
+        displayName: rawName.replace(/^@+/, ''),
+        tags: [],
+        playlists: [],
+        avatar: '',
+        cover: '',
+        desc: '',
+        clips: [],
+        order: seq++
+      };
+      accMap.set(key, acc);
+    }
+
+    g(1).split(/[,;|\/#]/).map(slugTag).filter(Boolean).forEach(tg => {
+      if (!acc.tags.some(x => x.toLowerCase() === tg.toLowerCase())) acc.tags.push(tg);
+    });
+
+    // Cột D (index 3): Tên Danh sách phát (Playlist)
+    const playlistName = g(3);
+    if (playlistName && !acc.playlists.some(p => p.name.toLowerCase() === playlistName.toLowerCase())) {
+      acc.playlists.push({ name: playlistName, count: 0 });
+    }
+
+    if (!acc.avatar && g(4)) acc.avatar = imgUrl(g(4), 256);
+    if (!acc.cover && g(5)) acc.cover = imgUrl(g(5), 720);
+    if (!acc.desc && g(8)) acc.desc = g(8);
+
+    const driveId = fid(g(6));
+    if (driveId) {
+      const matchedPl = acc.playlists.find(p => p.name.toLowerCase() === playlistName.toLowerCase());
+      if (matchedPl) matchedPl.count++;
+
+      acc.clips.push({
+        uid: `${key}__${acc.clips.length}__${driveId}`,
+        accountKey: key,
+        handle,
+        playlist: matchedPl ? matchedPl.name : '',
+        caption: g(7) || `Video ${acc.clips.length + 1}`,
+        desc: g(8) || acc.desc,
+        tags: [...acc.tags],
+        driveId,
+        seq: seq++
+      });
+    }
+  });
+
+  const accounts = [...accMap.values()].filter(a => a.clips.length > 0);
+  accounts.forEach(acc => {
+    acc.playlists = acc.playlists.filter(p => p.count > 0);
+    const firstId = acc.clips[0].driveId;
+    acc.avatarGen = makeAvatarSvg(acc.handle);
+    acc.avatarFb = [thumb(firstId, 256), thumbAlt(firstId, 256)];
+    acc.coverGen = makeAvatarSvg(acc.displayName);
+    acc.coverFb = [thumb(firstId, 720), thumbAlt(firstId, 720)];
+
+    acc.clips.forEach((c, idx) => {
+      c.poster = acc.cover || acc.avatar || '';
+      c.posterFb = [thumb(c.driveId, 720), thumbAlt(c.driveId, 720), thumb(c.driveId, 480)];
+      c.posterGen = acc.coverGen;
+      c.avatar = acc.avatar;
+      c.avatarFb = acc.avatarFb;
+      c.avatarGen = acc.avatarGen;
+      c.indexInAccount = idx;
+      c.totalInAccount = acc.clips.length;
+
+      if (c.playlist) {
+        const plClips = acc.clips.filter(x => x.playlist === c.playlist);
+        c.indexInPlaylist = plClips.findIndex(x => x.uid === c.uid);
+        c.totalInPlaylist = plClips.length;
+      }
+    });
+  });
+
+  const allClips = accounts.flatMap(a => a.clips);
+  return { accounts, allClips };
+}
+
+function rowsFromJson(json) {
+  if (json.status === 'error') throw new Error(json.errors?.[0]?.detailed_message || json.errors?.[0]?.message || 'Lỗi Sheet');
+  return (json.table?.rows || []).map(row => Array.from({ length: 9 }, (_, i) => { const c = row.c?.[i]; return c ? (c.v ?? c.f ?? '') : ''; }));
+}
+
+function viaFetch(id) {
+  return fetch(`https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json`).then(async res => {
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const txt = await res.text();
+    const a = txt.indexOf('{'), b = txt.lastIndexOf('}');
+    if (a < 0 || b < 0) throw new Error('Phản hồi không phải dữ liệu Sheet');
+    return rowsFromJson(JSON.parse(txt.slice(a, b + 1)));
+  });
+}
+
+function viaScript(id) {
+  return new Promise((resolve, reject) => {
+    const cb = '__pcCb' + Date.now(), s = document.createElement('script');
+    const done = () => { clearTimeout(t); delete window[cb]; s.remove(); };
+    const t = setTimeout(() => { done(); reject(new Error('Hết thời gian chờ Google Sheet')); }, 10000);
+    window[cb] = (json) => { done(); try { resolve(rowsFromJson(json)); } catch (e) { reject(e); } };
+    s.onerror = () => { done(); reject(new Error('Không tải được script từ Google')); };
+    s.src = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json;responseHandler:${cb}&_=${Date.now()}`;
+    document.head.appendChild(s);
+  });
+}
+
+async function fetchSheet(id) {
+  const errs = [];
+  for (const [name, fn] of [['fetch', viaFetch], ['script', viaScript]]) {
+    try { return await fn(id); } catch (e) { errs.push(name + ': ' + e.message); }
+  }
+  throw new Error(errs.join(' | '));
+}
+
+async function loadData(silentErr = false) {
+  const sid = fid(S.sheet) || (S.sheet && /^[\w-]{20,}$/.test(S.sheet) ? S.sheet : '');
+  let parsed;
+  if (!sid) {
+    parsed = parseRows(MOCK);
+    if (!silentErr) toast('Đang dùng dữ liệu mẫu');
+  } else {
+    try {
+      const rows = await fetchSheet(sid);
+      parsed = parseRows(rows);
+      if (!parsed.allClips.length) throw new Error('Sheet chưa có video nào');
+    } catch (e) {
+      parsed = parseRows(MOCK);
+      if (!silentErr) toast('Lỗi tải Sheet, đang dùng dữ liệu mẫu');
+    }
+  }
+  S.accounts = parsed.accounts;
+  S.clips = parsed.allClips;
+  rebuildFeed(true);
+}
+
+const isFollowing = (k) => S.following.includes(k);
+const isLiked = (uid) => S.likedClips.includes(uid);
+
+function toggleFollow(key) {
+  S.following = isFollowing(key) ? S.following.filter(x => x !== key) : [key, ...S.following];
+  save('pc_following', S.following);
+  toast(isFollowing(key) ? `Đã follow ${key}` : `Đã bỏ follow ${key}`);
+  refreshFollowButtons();
+  if (S.tab === 'following') rebuildFeed(false);
+}
+
+function toggleLikeClip(uid) {
+  S.likedClips = isLiked(uid) ? S.likedClips.filter(x => x !== uid) : [uid, ...S.likedClips];
+  save('pc_liked_clips', S.likedClips);
+  refreshLikeButtons();
+}
+
+function refreshFollowButtons() {
+  document.querySelectorAll('[data-follow-acc]').forEach(btn => {
+    const k = btn.dataset.followAcc;
+    const on = isFollowing(k);
+    btn.classList.toggle('bg-cyanAccent', on);
+    btn.classList.toggle('text-ink', on);
+    btn.classList.toggle('bg-rose-500', !on);
+    btn.classList.toggle('text-white', !on);
+    btn.innerHTML = `<i data-lucide="${on ? 'check' : 'plus'}" class="h-3.5 w-3.5"></i>`;
+  });
+  if (S.activeProfileKey) {
+    const on = isFollowing(S.activeProfileKey);
+    const pBtn = $('#btnProfileFollow');
+    if (pBtn) {
+      pBtn.classList.toggle('item-selected', on);
+      $('#profileFollowText').textContent = on ? 'Đang follow' : 'Follow';
+    }
+  }
+  icons();
+}
+
+function refreshLikeButtons() {
+  document.querySelectorAll('[data-like-clip]').forEach(btn => {
+    const uid = btn.dataset.likeClip;
+    const on = isLiked(uid);
+    const ic = btn.querySelector('svg, i');
+    if (ic) {
+      ic.classList.toggle('fill-rose-500', on);
+      ic.classList.toggle('text-rose-500', on);
+    }
+  });
+}
+
+function buildEmbedSrc(clip) {
+  if (!clip || clip.driveId.startsWith('MOCK')) return '';
+  return `https://drive.google.com/file/d/${encodeURIComponent(clip.driveId)}/preview`;
+}
+
+function mountPlayerAt(uid) {
+  S.activeClipUid = uid;
+  const clip = S.feedClips.find(c => c.uid === uid) || S.clips.find(c => c.uid === uid);
+  if (!clip) return;
+
+  document.querySelectorAll('.feed-player-host').forEach(host => {
+    if (host.dataset.uid === uid) {
+      if (clip.driveId.startsWith('MOCK')) {
+        host.innerHTML = `<div class="flex h-full w-full flex-col items-center justify-center gap-2 bg-black/80 p-6 text-center"><i data-lucide="clapperboard" class="h-10 w-10 text-cyanAccent"></i><p class="text-sm font-bold">${esc(clip.handle)} – ${esc(clip.caption)}</p><p class="text-xs text-white/60">Video mẫu (gắn Google Sheet để phát video Drive thật)</p></div>`;
+        icons();
+      } else if (!host.querySelector('iframe')) {
+        const src = buildEmbedSrc(clip);
+        host.innerHTML = `<iframe src="${esc(src)}" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
+      }
+    } else if (host.innerHTML) {
+      host.innerHTML = '';
+    }
+  });
+}
+
+let snapObserver;
+function setupFeedObserver() {
+  if (snapObserver) snapObserver.disconnect();
+  const container = $('#feedScroll');
+  snapObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting && entry.intersectionRatio >= 0.65) {
+        const uid = entry.target.dataset.uid;
+        if (uid && uid !== S.activeClipUid) {
+          mountPlayerAt(uid);
+        }
+      }
+    });
+  }, { root: container, threshold: [0.65] });
+
+  container.querySelectorAll('.feed-slide').forEach(slide => snapObserver.observe(slide));
+}
+
+function renderSlideHTML(clip) {
+  const liked = isLiked(clip.uid);
+  const followed = isFollowing(clip.accountKey);
+  const driveUrl = clip.driveId.startsWith('MOCK') ? '#' : `https://drive.google.com/file/d/${encodeURIComponent(clip.driveId)}/view`;
+  const tagsHtml = clip.tags.map(tg =>
+    `<button type="button" data-filter-tag="${esc(tg)}" class="pointer-events-auto rounded-full bg-white/15 px-2.5 py-0.5 text-[11px] font-bold text-cyanAccent backdrop-blur-md">#${esc(tg)}</button>`
+  ).join('');
+
+  const playlistBadge = clip.playlist
+    ? `<button type="button" data-play-playlist="${esc(clip.accountKey)}||${esc(clip.playlist)}" class="pointer-events-auto inline-flex w-fit items-center gap-1.5 rounded-lg border border-purple-400/35 bg-panel/80 px-2.5 py-1 text-[11px] font-bold text-purple-200 backdrop-blur-md hover:border-cyanAccent">
+        <i data-lucide="list-video" class="h-3.5 w-3.5 text-cyanAccent"></i>
+        <span>Danh sách phát: ${esc(clip.playlist)} (${clip.indexInPlaylist + 1}/${clip.totalInPlaylist})</span>
+      </button>`
+    : '';
+
+  return `<article data-uid="${esc(clip.uid)}" class="feed-slide">
+    <div class="video-stage">
+      ${renderImgTag(clip.poster, clip.posterFb, clip.posterGen, 'feed-poster-bg', '')}
+      ${renderImgTag(clip.poster, clip.posterFb, clip.posterGen, 'feed-poster-cover', clip.caption)}
+      <div data-uid="${esc(clip.uid)}" class="feed-player-host"></div>
+      <div class="feed-grad-top"></div>
+      <div class="feed-grad-bottom"></div>
+
+      <!-- RIGHT ACTION RAIL -->
+      <div class="feed-overlay-ui absolute bottom-24 right-3 z-20 flex flex-col items-center gap-4">
+        <div class="relative mb-1">
+          <button type="button" data-open-profile="${esc(clip.accountKey)}" class="h-12 w-12 overflow-hidden rounded-full border-2 border-cyanAccent bg-panel shadow-lg" aria-label="Trang cá nhân ${esc(clip.handle)}">
+            ${renderImgTag(clip.avatar, clip.avatarFb, clip.avatarGen, 'h-full w-full object-cover', clip.handle)}
+          </button>
+          <button type="button" data-follow-acc="${esc(clip.accountKey)}" class="absolute -bottom-2 left-1/2 flex h-5 w-5 -translate-x-1/2 items-center justify-center rounded-full shadow ${followed ? 'bg-cyanAccent text-ink' : 'bg-rose-500 text-white'}" aria-label="Follow">
+            <i data-lucide="${followed ? 'check' : 'plus'}" class="h-3 w-3"></i>
+          </button>
+        </div>
+
+        <button type="button" data-like-clip="${esc(clip.uid)}" class="glass flex h-11 w-11 items-center justify-center rounded-full" aria-label="Thích video">
+          <i data-lucide="heart" class="h-5 w-5 ${liked ? 'fill-rose-500 text-rose-500' : 'text-white'}"></i>
+        </button>
+
+        <button type="button" data-open-profile="${esc(clip.accountKey)}" class="glass flex h-11 w-11 flex-col items-center justify-center rounded-full text-[10px] font-bold text-cyanAccent" title="Xem trang cá nhân & Danh sách phát">
+          <i data-lucide="layers" class="h-4 w-4"></i>
+          <span>${clip.totalInAccount}</span>
+        </button>
+
+        <a href="${esc(driveUrl)}" target="_blank" rel="noopener noreferrer" class="glass flex h-11 w-11 items-center justify-center rounded-full text-purple-200" aria-label="Mở trên Drive">
+          <i data-lucide="external-link" class="h-5 w-5"></i>
+        </a>
+      </div>
+
+      <!-- BOTTOM CAPTION, PLAYLIST & HASHTAGS -->
+      <div class="feed-overlay-ui absolute bottom-20 left-3 right-16 z-20 flex flex-col gap-1.5">
+        ${playlistBadge}
+        <div class="flex items-center gap-2">
+          <button type="button" data-open-profile="${esc(clip.accountKey)}" class="text-left text-sm font-extrabold text-white hover:text-cyanAccent">
+            ${esc(clip.handle)}
+          </button>
+          <span class="rounded bg-white/10 px-1.5 py-0.5 text-[10px] font-semibold text-white/70">${clip.indexInAccount + 1}/${clip.totalInAccount}</span>
+        </div>
+        <p class="text-xs font-semibold text-white/95">${esc(clip.caption)}</p>
+        ${clip.desc ? `<p class="line-clamp-2 text-[11px] leading-snug text-white/65">${esc(clip.desc)}</p>` : ''}
+        ${tagsHtml ? `<div class="mt-0.5 flex flex-wrap gap-1.5">${tagsHtml}</div>` : ''}
+      </div>
+    </div>
+  </article>`;
+}
+
+function updateTopBadge() {
+  const txtEl = $('#topModeText');
+  const clearBtn = $('#btnClearFeedFilter');
+  let label = 'Dành cho bạn';
+  let hasFilter = false;
+
+  if (S.tab === 'discover') {
+    label = 'Khám phá';
+  } else if (S.feedPlaylist) {
+    label = `${S.feedPlaylist.name}`;
+    hasFilter = true;
+  } else if (S.tab === 'following') {
+    label = S.tagFilter ? `Đang follow • #${S.tagFilter}` : 'Đang follow';
+    hasFilter = Boolean(S.tagFilter);
+  } else {
+    label = S.tagFilter ? `Dành cho bạn • #${S.tagFilter}` : 'Dành cho bạn';
+    hasFilter = Boolean(S.tagFilter);
+  }
+
+  txtEl.textContent = label;
+  clearBtn.classList.toggle('hidden', !hasFilter || S.tab === 'discover');
+}
+
+function rebuildFeed(shuffle = false, startUid = '') {
+  let pool = [...S.clips];
+
+  if (S.feedPlaylist) {
+    pool = pool.filter(c => c.accountKey === S.feedPlaylist.accountKey && c.playlist === S.feedPlaylist.name);
+  } else {
+    if (S.tab === 'following') {
+      pool = pool.filter(c => isFollowing(c.accountKey));
+    }
+    if (S.tagFilter) {
+      const tf = S.tagFilter.toLowerCase();
+      pool = pool.filter(c => c.tags.some(t => t.toLowerCase() === tf));
+    }
+    if (shuffle && S.tab === 'foryou' && !S.tagFilter) {
+      for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+      }
+    }
+  }
+
+  updateTopBadge();
+  S.feedClips = pool;
+  const scroller = $('#feedScroll');
+
+  if (!pool.length) {
+    const emptyMsg = S.tab === 'following'
+      ? 'Bạn chưa follow Account nào. Bấm + trên avatar ở feed để follow.'
+      : 'Không có video nào khớp với bộ lọc hiện tại.';
+    scroller.innerHTML = `<div class="flex h-dvh flex-col items-center justify-center gap-3 px-6 text-center">
+      <p class="text-sm text-white/60">${esc(emptyMsg)}</p>
+      ${(S.tagFilter || S.feedPlaylist) ? `<button type="button" id="btnClearTag" class="violet-grad rounded-full px-5 py-2 text-xs font-bold">Quay lại tất cả</button>` : ''}
+    </div>`;
+    const cBtn = $('#btnClearTag');
+    if (cBtn) cBtn.onclick = () => { S.tagFilter = ''; S.feedPlaylist = null; rebuildFeed(false); };
+    icons();
+    return;
+  }
+
+  scroller.innerHTML = pool.map(renderSlideHTML).join('');
+  icons();
+  setupFeedObserver();
+
+  let targetIdx = 0;
+  if (startUid) {
+    const found = pool.findIndex(c => c.uid === startUid);
+    if (found >= 0) targetIdx = found;
+  }
+  const targetSlide = scroller.children[targetIdx];
+  if (targetSlide) {
+    scroller.scrollTop = targetSlide.offsetTop;
+    mountPlayerAt(pool[targetIdx].uid);
+  }
+}
+
+/* ---------- Profile & Discover Views ---------- */
+function switchTab(tabName) {
+  S.tab = tabName;
+  if (tabName !== 'foryou') S.feedPlaylist = null;
+
+  document.querySelectorAll('.nav-tab').forEach(btn => {
+    btn.classList.toggle('tab-active', btn.dataset.tab === tabName);
+  });
+
+  $('#viewFeed').classList.toggle('hidden', tabName !== 'foryou' && tabName !== 'following');
+  $('#viewProfile').classList.add('hidden');
+  $('#viewDiscover').classList.toggle('hidden', tabName !== 'discover');
+
+  if (tabName === 'foryou' || tabName === 'following') {
+    rebuildFeed(false);
+  } else if (tabName === 'discover') {
+    updateTopBadge();
+    stopAllFeedPlayers();
+    renderDiscover();
+  }
+  icons();
+}
+
+function stopAllFeedPlayers() {
+  S.activeClipUid = '';
+  document.querySelectorAll('.feed-player-host').forEach(h => { h.innerHTML = ''; });
+}
+
+function renderProfileGrid(acc) {
+  const activePl = S.profilePlaylist;
+  const clipsToShow = activePl
+    ? acc.clips.filter(c => c.playlist === activePl)
+    : acc.clips;
+
+  const playAllBtn = $('#btnPlayAllPlaylist');
+  if (activePl && clipsToShow.length > 0) {
+    playAllBtn.classList.remove('hidden');
+    playAllBtn.classList.add('inline-flex');
+  } else {
+    playAllBtn.classList.add('hidden');
+    playAllBtn.classList.remove('inline-flex');
+  }
+
+  $('#profileGridTitle span:last-child').textContent = activePl ? `Danh sách phát: ${activePl}` : 'Tất cả video';
+  $('#profileClipCount').textContent = `${clipsToShow.length} clip`;
+
+  $('#profileGrid').innerHTML = clipsToShow.map((c, i) =>
+    `<button type="button" data-play-clip="${esc(c.uid)}" class="group relative aspect-[9/16] overflow-hidden rounded-xl bg-panel ring-1 ring-purple-400/20 text-left">
+      ${renderImgTag(c.poster, c.posterFb, c.posterGen, 'h-full w-full object-cover transition duration-300 group-hover:scale-105', c.caption)}
+      ${(!activePl && c.playlist) ? `<span class="absolute left-1.5 top-1.5 max-w-[85%] truncate rounded bg-ink/80 px-1.5 py-0.5 text-[9px] font-bold text-purple-200 backdrop-blur">${esc(c.playlist)}</span>` : ''}
+      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/90 via-ink/40 to-transparent p-2">
+        <span class="block truncate text-[11px] font-bold text-white">${esc(c.caption)}</span>
+        <span class="text-[10px] text-cyanAccent">#${i + 1}</span>
+      </div>
+    </button>`
+  ).join('');
+}
+
+function renderProfilePlaylists(acc) {
+  const wrap = $('#profilePlaylistsWrap');
+  const bar = $('#profilePlaylists');
+  if (!acc.playlists || !acc.playlists.length) {
+    wrap.classList.add('hidden');
+    bar.innerHTML = '';
+    return;
+  }
+  wrap.classList.remove('hidden');
+  const allChip = `<button type="button" data-select-playlist="" class="shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-bold transition ${!S.profilePlaylist ? 'violet-grad' : 'glass text-white/80'}">Tất cả (${acc.clips.length})</button>`;
+  const plChips = acc.playlists.map(pl => {
+    const active = S.profilePlaylist === pl.name;
+    return `<button type="button" data-select-playlist="${esc(pl.name)}" class="shrink-0 inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-bold transition ${active ? 'violet-grad' : 'glass text-purple-200'}">
+      <i data-lucide="list-video" class="h-3.5 w-3.5 ${active ? 'text-white' : 'text-cyanAccent'}"></i>
+      <span>${esc(pl.name)} (${pl.count})</span>
+    </button>`;
+  }).join('');
+  bar.innerHTML = allChip + plChips;
+}
+
+function openProfile(accountKey, preselectPlaylist = '') {
+  const acc = S.accounts.find(a => a.key === accountKey);
+  if (!acc) return;
+  S.activeProfileKey = accountKey;
+  S.profilePlaylist = preselectPlaylist;
+  stopAllFeedPlayers();
+
+  $('#viewFeed').classList.add('hidden');
+  $('#viewDiscover').classList.add('hidden');
+  $('#viewProfile').classList.remove('hidden');
+  $('#viewProfile').scrollTop = 0;
+  $('#topModeText').textContent = acc.handle;
+  $('#btnClearFeedFilter').classList.add('hidden');
+
+  $('#profileAvatar').innerHTML = renderImgTag(acc.avatar, acc.avatarFb, acc.avatarGen, 'h-full w-full object-cover', acc.handle);
+  $('#profileHandle').textContent = acc.handle;
+  const plInfo = acc.playlists.length ? ` • ${acc.playlists.length} danh sách phát` : '';
+  $('#profileStats').textContent = `${acc.clips.length} video${plInfo}${isFollowing(acc.key) ? ' • Đang follow' : ''}`;
+  $('#profileDesc').textContent = acc.desc || '';
+  $('#profileTags').innerHTML = acc.tags.map(tg =>
+    `<button type="button" data-filter-tag="${esc(tg)}" class="glass rounded-full px-3 py-1 text-xs font-bold text-cyanAccent">#${esc(tg)}</button>`
+  ).join('');
+
+  renderProfilePlaylists(acc);
+  renderProfileGrid(acc);
+  refreshFollowButtons();
+  icons();
+}
+
+function launchPlaylistFeed(accountKey, playlistName, startUid = '') {
+  S.tab = 'foryou';
+  S.feedPlaylist = { accountKey, name: playlistName };
+  document.querySelectorAll('.nav-tab').forEach(b => b.classList.toggle('tab-active', b.dataset.tab === 'foryou'));
+  $('#viewProfile').classList.add('hidden');
+  $('#viewDiscover').classList.add('hidden');
+  $('#viewFeed').classList.remove('hidden');
+  rebuildFeed(false, startUid);
+}
+
+function renderDiscover() {
+  const allTags = [...new Set(S.clips.flatMap(c => c.tags))].sort((a, b) => a.localeCompare(b, 'vi'));
+  $('#discoverTags').innerHTML = allTags.length
+    ? allTags.map(tg => {
+        const active = S.tagFilter.toLowerCase() === tg.toLowerCase();
+        return `<button type="button" data-filter-tag="${esc(tg)}" class="shrink-0 rounded-full border px-3.5 py-1 text-xs font-bold ${active ? 'violet-grad' : 'glass text-cyanAccent'}">#${esc(tg)}</button>`;
+      }).join('')
+    : '<span class="text-xs text-white/40">Chưa có hashtag nào.</span>';
+
+  const q = S.searchQuery.trim().toLowerCase();
+  const tf = S.tagFilter.trim().toLowerCase();
+  const list = S.accounts.filter(acc => {
+    const matchTag = !tf || acc.tags.some(t => t.toLowerCase() === tf);
+    const matchQ = !q || acc.handle.toLowerCase().includes(q)
+      || acc.displayName.toLowerCase().includes(q)
+      || acc.tags.some(t => t.toLowerCase().includes(q))
+      || acc.playlists.some(p => p.name.toLowerCase().includes(q))
+      || acc.clips.some(c => c.caption.toLowerCase().includes(q));
+    return matchTag && matchQ;
+  });
+
+  $('#discoverHeading').textContent = tf ? `Account có #${S.tagFilter}` : (q ? `Kết quả: "${S.searchQuery.trim()}"` : 'Tất cả Account');
+  $('#discoverCount').textContent = `${list.length} kênh`;
+
+  $('#discoverAccounts').innerHTML = list.length
+    ? list.map(acc => `<article data-open-profile="${esc(acc.key)}" class="glass flex cursor-pointer items-center gap-3 rounded-2xl p-3">
+        <div class="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-panel ring-1 ring-purple-400/30">
+          ${renderImgTag(acc.avatar, acc.avatarFb, acc.avatarGen, 'h-full w-full object-cover', acc.handle)}
+        </div>
+        <div class="min-w-0 flex-1">
+          <h3 class="truncate text-sm font-extrabold text-white">${esc(acc.handle)}</h3>
+          <p class="truncate text-[11px] text-cyanAccent">${acc.clips.length} video${acc.playlists.length ? ` • ${acc.playlists.length} playlist` : ''}</p>
+          ${acc.tags.length ? `<p class="truncate text-[10px] text-white/50">${acc.tags.slice(0, 3).map(t => '#' + t).join(' ')}</p>` : ''}
+        </div>
+      </article>`).join('')
+    : '<p class="col-span-full py-10 text-center text-xs text-white/50">Không tìm thấy Account phù hợp.</p>';
+
+  icons();
+}
+
+/* ---------- Global Click & Keyboard Navigation ---------- */
+document.addEventListener('click', (ev) => {
+  const t = ev.target;
+
+  const tabBtn = t.closest('[data-tab]');
+  if (tabBtn) return switchTab(tabBtn.dataset.tab);
+
+  const followBtn = t.closest('[data-follow-acc]');
+  if (followBtn) {
+    ev.stopPropagation();
+    return toggleFollow(followBtn.dataset.followAcc);
+  }
+
+  const likeBtn = t.closest('[data-like-clip]');
+  if (likeBtn) {
+    ev.stopPropagation();
+    return toggleLikeClip(likeBtn.dataset.likeClip);
+  }
+
+  const profTrigger = t.closest('[data-open-profile]');
+  if (profTrigger) {
+    ev.stopPropagation();
+    return openProfile(profTrigger.dataset.openProfile);
+  }
+
+  const plSelectBtn = t.closest('[data-select-playlist]');
+  if (plSelectBtn) {
+    const acc = S.accounts.find(a => a.key === S.activeProfileKey);
+    if (!acc) return;
+    S.profilePlaylist = plSelectBtn.dataset.selectPlaylist;
+    renderProfilePlaylists(acc);
+    renderProfileGrid(acc);
+    icons();
+    return;
+  }
+
+  const playPlTrigger = t.closest('[data-play-playlist]');
+  if (playPlTrigger) {
+    ev.stopPropagation();
+    const [accKey, plName] = playPlTrigger.dataset.playPlaylist.split('||');
+    if (accKey && plName) {
+      launchPlaylistFeed(accKey, plName, S.activeClipUid);
+      toast(`Danh sách phát: ${plName}`);
+    }
+    return;
+  }
+
+  const tagTrigger = t.closest('[data-filter-tag]');
+  if (tagTrigger) {
+    ev.stopPropagation();
+    const clickedTag = tagTrigger.dataset.filterTag;
+    S.feedPlaylist = null;
+    S.tagFilter = (S.tagFilter.toLowerCase() === clickedTag.toLowerCase()) ? '' : clickedTag;
+    if (S.tab === 'discover') {
+      renderDiscover();
+      if (S.tagFilter) toast(`Đang lọc #${S.tagFilter}`);
+    } else {
+      switchTab(S.tab === 'following' ? 'following' : 'foryou');
+      toast(S.tagFilter ? `Đang xem #${S.tagFilter}` : 'Đã bỏ lọc hashtag');
+    }
+    return;
+  }
+
+  const playClipBtn = t.closest('[data-play-clip]');
+  if (playClipBtn) {
+    const uid = playClipBtn.dataset.playClip;
+    if (S.activeProfileKey && S.profilePlaylist) {
+      launchPlaylistFeed(S.activeProfileKey, S.profilePlaylist, uid);
+    } else {
+      S.feedPlaylist = null;
+      S.tab = 'foryou';
+      document.querySelectorAll('.nav-tab').forEach(b => b.classList.toggle('tab-active', b.dataset.tab === 'foryou'));
+      $('#viewProfile').classList.add('hidden');
+      $('#viewDiscover').classList.add('hidden');
+      $('#viewFeed').classList.remove('hidden');
+      rebuildFeed(false, uid);
+    }
+  }
+});
+
+$('#btnPlayAllPlaylist').onclick = () => {
+  if (S.activeProfileKey && S.profilePlaylist) {
+    launchPlaylistFeed(S.activeProfileKey, S.profilePlaylist, '');
+  }
+};
+
+$('#btnClearFeedFilter').onclick = () => {
+  S.tagFilter = '';
+  S.feedPlaylist = null;
+  rebuildFeed(false);
+  toast('Đã quay về Feed chung');
+};
+
+document.addEventListener('keydown', (e) => {
+  if (!$('#cfgModal').classList.contains('hidden')) {
+    if (e.key === 'Escape') closeCfg();
+    return;
+  }
+  if ($('#viewFeed').classList.contains('hidden')) return;
+  const scroller = $('#feedScroll');
+  const h = scroller.clientHeight || window.innerHeight;
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    scroller.scrollBy({ top: h, behavior: 'smooth' });
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    scroller.scrollBy({ top: -h, behavior: 'smooth' });
+  }
+});
+
+$('#btnBackFromProfile').onclick = () => {
+  switchTab(S.tab === 'following' ? 'following' : 'foryou');
+};
+
+$('#btnProfileFollow').onclick = () => {
+  if (S.activeProfileKey) toggleFollow(S.activeProfileKey);
+};
+
+$('#btnClearUi').onclick = () => {
+  S.cleanUi = !S.cleanUi;
+  document.body.classList.toggle('clean-mode', S.cleanUi);
+  toast(S.cleanUi ? 'Đã ẩn chữ trên video' : 'Đã hiện chữ trên video');
+};
+
+const dInput = $('#discoverInput');
+const dClear = $('#discoverClear');
+dInput.addEventListener('input', () => {
+  S.searchQuery = dInput.value;
+  dClear.classList.toggle('hidden', !S.searchQuery.trim());
+  renderDiscover();
+});
+dClear.onclick = () => {
+  dInput.value = '';
+  S.searchQuery = '';
+  dClear.classList.add('hidden');
+  renderDiscover();
+};
+
+function openCfg() {
+  $('#cfgSheet').value = S.sheet;
+  const m = $('#cfgModal');
+  m.classList.remove('hidden');
+  m.classList.add('flex');
+  icons();
+}
+function closeCfg() {
+  const m = $('#cfgModal');
+  m.classList.add('hidden');
+  m.classList.remove('flex');
+}
+$('#btnOpenCfg').onclick = openCfg;
+$('#cfgClose').onclick = closeCfg;
+$('#cfgModal').addEventListener('click', (e) => { if (e.target.id === 'cfgModal') closeCfg(); });
+
+$('#cfgSave').onclick = () => {
+  const v = $('#cfgSheet').value.trim();
+  S.sheet = v;
+  lsSetRaw('pc_sheet', v);
+  S.feedPlaylist = null;
+  closeCfg();
+  loadData(false);
+};
+$('#cfgMock').onclick = () => {
+  S.sheet = '';
+  lsSetRaw('pc_sheet', '');
+  S.feedPlaylist = null;
+  closeCfg();
+  loadData(false);
+};
+
+icons();
+loadData(true);
+})();
+</script>
+</body>
+</html>
